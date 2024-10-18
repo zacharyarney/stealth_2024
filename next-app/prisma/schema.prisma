@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int              @id @default(autoincrement())
+  username  String           @unique
+  password  String
+  documents DocumentAccess[] // List of documents the user has access to
+}
+
+model Document {
+  id         Int              @id @default(autoincrement())
+  title      String
+  content    String
+  deltaState Bytes?
+  users      DocumentAccess[] // List of users that have access to the document
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+}
+
+// Join table to represent many-to-many relationship between Users and Documents
+model DocumentAccess {
+  userId     Int
+  documentId Int
+  user       User     @relation(fields: [userId], references: [id])
+  document   Document @relation(fields: [documentId], references: [id])
+
+  @@id([userId, documentId]) // Composite primary key for the join table
+}
+
+// model User {
+//   id         Int        @id @default(autoincrement())
+//   username   String     @unique
+//   password   String
+//   ownedDocs  Document[] @relation("UserDocuments")
+//   collabDocs Document[] @relation("Collaborators")
+// }
+//
+// model Document {
+//   id            Int      @id @default(autoincrement())
+//   title         String
+//   content       String // Optional, if you want to store a snapshot
+//   deltaState    Json? // Quill Delta JSON state for collaborative editing
+//   ownerId       Int
+//   owner         User     @relation("UserDocuments", fields: [ownerId], references: [id])
+//   collaborators User[]   @relation("Collaborators")
+//   createdAt     DateTime @default(now())
+//   updatedAt     DateTime @updatedAt
+//
+//   @@index([ownerId])
+// }
